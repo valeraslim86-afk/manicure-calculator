@@ -157,35 +157,37 @@ function upd() {
   $("note").innerHTML = n;
 }
 
-function report() {
-  var S = last.S, R = last.R, t = [];
-  t.push("Расчёт рентабельности кабинета");
-  R.rows.forEach(function (r) {
-    t.push("Услуга: " + r.name + ", клиентов " + r.clients + ", цена " + (r.price > 0 ? rub(r.price) : "не задана") + ", себестоимость " + rub(r.cost) + (r.profitPer !== null ? ", прибыль " + rub(r.profitPer) + " (" + pct(r.margin) + ")" : ""));
-  });
-  t.push("Оборудование и мебель, амортизация: " + rub(R.equipMonth) + " в месяц");
-  t.push("Обучение: " + rub(R.trainMonth) + " в месяц");
-  t.push("Аренда и прочие постоянные: " + rub(R.fixedMonth) + " в месяц");
-  t.push("Налоги и комиссии: " + S.tax + "%; желаемая прибыль: " + S.profit + "%");
-  t.push("Выручка: " + (R.revenue > 0 ? rub(R.revenue) : "-") + "; прибыль в месяц: " + (R.profit === null ? "-" : rub(R.profit)) + "; рентабельность: " + (R.margin === null ? "-" : pct(R.margin)));
-  return t.join("\n");
-}
-function send() {
-  if (!last) upd();
-  var txt = report(), m = $("msg");
-  window.open("https://vk.com/write" + OWNER_VK, "_blank");
-  m.innerHTML = "";
-  var t = document.createElement("textarea"); t.value = txt; t.readOnly = true; m.appendChild(t);
-  var b = document.createElement("button"); b.className = "btn ghost"; b.type = "button"; b.textContent = "Скопировать расчёт";
-  var st = document.createElement("div"); st.className = "st";
-  b.onclick = function () {
-    function ok() { st.textContent = "Скопировано. Вставь в диалог со мной."; }
-    function fb() { t.focus(); t.select(); t.setSelectionRange(0, 99999); var r = false; try { r = document.execCommand("copy"); } catch (e) { } st.textContent = r ? "Скопировано. Вставь в диалог со мной." : "Выдели текст выше, скопируй и вставь в диалог со мной."; }
-    if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(txt).then(ok, fb); else fb();
+/* ---------- Итог и анонимный снимок ---------- */
+function clip(x) { return String(x == null ? "" : x).slice(0, 40); }
+function known(list, name) { return list.indexOf(name) >= 0; }
+function snapshot() {
+  var S = last.S, R = last.R;
+  var allMats = [], allEq = [];
+  Object.keys(PROFS).forEach(function (k) { allMats = allMats.concat(PROFS[k].mats); allEq = allEq.concat(PROFS[k].equip); });
+  var allSvc = []; Object.keys(PROFS).forEach(function (k) { allSvc = allSvc.concat(PROFS[k].services); });
+  return {
+    v: 1, t: new Date().toISOString(), profs: S.profs, tax: S.tax, profit: S.profit,
+    services: S.services.filter(function (s) { return s.on && s.clients > 0; }).map(function (s) {
+      return { prof: s.prof, name: known(allSvc, s.name) ? s.name : "", custom: !known(allSvc, s.name), price: s.price, clients: s.clients, labor: s.labor, mode: s.mode,
+        mats: s.mats.filter(function (m) { return m.price > 0; }).map(function (m) { return { name: clip(m.name), std: known(allMats, m.name), price: m.price, vol: m.vol, use: m.use }; }) };
+    }),
+    equip: S.equip.filter(function (e) { return e.on && e.price > 0; }).map(function (e) { return { name: clip(e.name), std: known(allEq, e.name), price: e.price, years: e.years }; }),
+    train: S.train.filter(function (t) { return t.price > 0; }).map(function (t) { return { name: clip(t.name), std: known(COMMON.train, t.name), price: t.price, months: t.months }; }),
+    fixed: S.fixed.filter(function (f) { return f.monthly > 0; }).map(function (f) { return { name: clip(f.name), std: known(COMMON.fixed, f.name), monthly: f.monthly }; }),
+    res: { profit: R.profit, margin: R.margin, revenue: R.revenue, F: R.F, clients: R.totalClients }
   };
-  m.appendChild(b); m.appendChild(st);
-  var i = document.createElement("div"); i.className = "st"; i.textContent = "Если диалог не открылся, вернись в ВК и вставь расчёт туда сам."; m.appendChild(i);
-  b.click();
+}
+function show() {
+  upd();
+  $("result").hidden = false; $("pre").hidden = true;
+  var st = $("sent"); st.textContent = "";
+  if ($("consent").checked && CONFIG.collectUrl) {
+    try {
+      fetch(CONFIG.collectUrl, { method: "POST", mode: "no-cors", headers: { "Content-Type": "text/plain" }, body: JSON.stringify(snapshot()), keepalive: true });
+      st.textContent = "Цифры анонимно добавлены в статистику. Спасибо!";
+    } catch (e) { st.textContent = ""; }
+  } else if (!$("consent").checked) { st.textContent = "Цифры остались только у тебя."; }
+  $("result").scrollIntoView({ behavior: "smooth", block: "nearest" });
 }
 
 /* ---------- Ссылка с готовыми цифрами (в том числе старого формата #p= {d,f,cli}) ---------- */
@@ -222,7 +224,7 @@ function stateFromHash(P) {
   $("addEq").onclick = function () { readAll(); S_.equip.push({ name: "", price: 0, years: 5, on: true }); buildEquip(S_); upd(); };
   $("addTr").onclick = function () { readAll(); S_.train.push({ name: "", price: 0, months: 12 }); buildTrain(S_); upd(); };
   $("addFx").onclick = function () { readAll(); S_.fixed.push({ name: "", monthly: 0 }); buildFixed(S_); upd(); };
-  $("send").onclick = send;
+  $("show").onclick = show;
   document.addEventListener("input", function (e) { if (e.target.closest && e.target.closest("#svcList,#equip,#train,#fixed")) upd(); });
   document.addEventListener("change", function (e) { if (e.target.closest && e.target.closest("#svcList,#equip")) upd(); });
   upd();

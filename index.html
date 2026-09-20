@@ -58,19 +58,18 @@
 </div>
 <aside class="sticky">
   <section class="card">
-    <h2>Результат</h2>
-    <p class="hint">Считается сразу, пока вводишь.</p>
-    <div class="kpi" id="kpi"></div>
-    <div class="bar" id="bar"></div>
-    <div class="leg" id="leg"></div>
-    <div class="tblwrap" id="tbl"></div>
-    <div class="note" id="note"></div>
-  </section>
-  <section class="card">
-    <h2>Отправить расчёт</h2>
-    <p class="hint">По желанию. Кнопка покажет расчёт текстом: скопируй его и вставь в диалог.</p>
-    <button class="btn" type="button" id="send">Отправить мне расчёт</button>
-    <div id="msg"></div>
+    <h2>Итог</h2>
+    <p class="hint" id="pre">Заполни данные слева и нажми кнопку: увидишь финальный расчёт по своему кабинету.</p>
+    <button class="btn" type="button" id="show">Показать итоговый расчёт</button>
+    <label class="consent"><input type="checkbox" id="consent" checked><span>Анонимно добавить мои цифры в общую статистику калькулятора (без имени и контактов). Можно снять галочку, итог покажется всё равно.</span></label>
+    <div id="result" hidden>
+      <div class="kpi" id="kpi"></div>
+      <div class="bar" id="bar"></div>
+      <div class="leg" id="leg"></div>
+      <div class="tblwrap" id="tbl"></div>
+      <div class="note" id="note"></div>
+      <div class="st" id="sent"></div>
+    </div>
   </section>
 </aside>
 </main>
