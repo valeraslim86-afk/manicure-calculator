@@ -221,12 +221,13 @@ function show() {
   $("result").hidden = false; $("pre").hidden = true;
   var st = $("sent"); st.textContent = "";
   if ($("consent").checked && CONFIG.collectUrl) {
-    var body = JSON.stringify(snapshot());
-    if (body === lastSent) { st.textContent = "Эти цифры уже добавлены в статистику."; }
+    var snap = snapshot(), body = JSON.stringify(snap);
+    snap.t = ""; var key = JSON.stringify(snap); /* время не участвует в сравнении: одинаковые цифры не дублируем */
+    if (key === lastSent) { st.textContent = "Эти цифры уже добавлены в статистику."; }
     else {
       st.textContent = "Добавляю в статистику...";
       fetch(CONFIG.collectUrl, { method: "POST", headers: { "Content-Type": "text/plain" }, body: body })
-        .then(function (r) { if (r.status === 204) { lastSent = body; st.textContent = "Цифры анонимно добавлены в статистику. Спасибо!"; } else st.textContent = "В статистику добавить не получилось, итог выше это не меняет."; })
+        .then(function (r) { if (r.status === 204) { lastSent = key; st.textContent = "Цифры анонимно добавлены в статистику. Спасибо!"; } else st.textContent = "В статистику добавить не получилось, итог выше это не меняет."; })
         .catch(function () { st.textContent = "В статистику добавить не получилось, итог выше это не меняет."; });
     }
   } else if (!$("consent").checked) { st.textContent = "Цифры остались только у тебя."; }
