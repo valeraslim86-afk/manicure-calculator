@@ -254,7 +254,7 @@ function stateFromHash(P) {
 }
 
 /* ---------- Запуск ---------- */
-(function init() {
+function init(P) {
   var box = $("chips");
   box.innerHTML = Object.keys(PROFS).map(function (k) { return '<label class="chip"><input type="checkbox" value="' + k + '"><span>' + PROFS[k].name + '</span></label>'; }).join("");
   box.querySelectorAll("input").forEach(function (c) {
@@ -269,7 +269,6 @@ function stateFromHash(P) {
       buildAll(S_); upd();
     };
   });
-  var P = fromHash();
   var pm = /[#&]prof=([a-z,]+)/.exec(location.hash); /* ссылка вида #prof=epil открывает калькулятор сразу с нужным профилем */
   if (P) { try { S_ = stateFromHash(P); if (!S_ || !Array.isArray(S_.services) || !Array.isArray(S_.equip) || !Array.isArray(S_.train) || !Array.isArray(S_.fixed) || S_.services.some(function (s) { return !PROFS[s.prof] || !Array.isArray(s.mats); })) throw 0; } catch (e) { S_ = emptyState(); P = null; } }
   else if (pm) { pm[1].split(",").forEach(function (k) { if (PROFS[k]) addProfession(S_, k); }); }
@@ -292,4 +291,18 @@ function stateFromHash(P) {
   document.addEventListener("input", function (e) { if (e.target.closest && e.target.closest("#svcList,#equip,#train,#fixed")) upd(); });
   document.addEventListener("change", function (e) { if (e.target.closest && e.target.closest("#svcList,#equip")) upd(); });
   upd();
-})();
+}
+
+/* Короткая ссылка со сжатыми цифрами: #z=<base64url(deflate-raw(JSON))>. Распаковка встроенная в браузер. */
+function fromZ(cb) {
+  var m = /[#&]z=([A-Za-z0-9_-]+)/.exec(location.hash);
+  if (!m || typeof DecompressionStream === "undefined") { cb(null); return; }
+  try {
+    var s = m[1].replace(/-/g, "+").replace(/_/g, "/"); while (s.length % 4) s += "=";
+    var bin = atob(s), bytes = new Uint8Array(bin.length);
+    for (var i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+    new Response(new Blob([bytes]).stream().pipeThrough(new DecompressionStream("deflate-raw"))).text()
+      .then(function (t) { cb(JSON.parse(t)); }, function () { cb(null); });
+  } catch (e) { cb(null); }
+}
+fromZ(function (Z) { init(Z || fromHash()); });
