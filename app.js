@@ -217,7 +217,10 @@ function stateFromHash(P) {
     c.onchange = function () { readAll(); if (c.checked) addProfession(S_, c.value); else removeProfession(S_, c.value); buildAll(S_); upd(); };
   });
   var P = fromHash();
-  if (P) { S_ = stateFromHash(P); } else { addProfession(S_, "manicure"); }
+  var pm = /[#&]prof=([a-z,]+)/.exec(location.hash); /* ссылка вида #prof=epil открывает калькулятор сразу с нужным профилем */
+  if (P) { S_ = stateFromHash(P); }
+  else if (pm) { pm[1].split(",").forEach(function (k) { if (PROFS[k]) addProfession(S_, k); }); }
+  if (!S_.profs.length) addProfession(S_, "manicure");
   S_.services.forEach(function (s) { var n = parseInt(String(s.id).slice(1), 10); if (n > uid) uid = n; });
   buildAll(S_);
   ["tax", "profit"].forEach(function (i) { $(i).oninput = upd; });
