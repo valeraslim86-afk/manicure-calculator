@@ -104,3 +104,14 @@ td.bad{color:var(--bad);font-weight:600}
 .cta-links a{display:block;text-align:center;padding:12px 14px;border-radius:var(--r-sm);background:var(--surface);border:1px solid var(--line);color:var(--tx);text-decoration:none;font-weight:600;word-break:break-all}
 .cta-links a:first-of-type{background:linear-gradient(135deg,var(--ac),var(--ac-2));color:var(--ac-ink);border:0}
 footer{color:var(--mut);font-size:13px;padding:8px 18px 40px;text-align:center}
+
+/* Сворачиваемые блоки формы */
+details.sec>summary{list-style:none;cursor:pointer;display:flex;align-items:center;gap:10px}
+details.sec>summary::-webkit-details-marker{display:none}
+details.sec>summary h2{margin:0;flex:1}
+details.sec>summary::after{content:"▾";color:var(--mut);transition:transform .15s}
+details.sec[open]>summary::after{transform:rotate(180deg)}
+details.sec[open]>summary{margin-bottom:12px}
+.done{font-size:12px;color:var(--ok);font-weight:600;white-space:nowrap}
+.next{margin-top:14px;width:100%;background:transparent;color:var(--ac);border:1.5px solid color-mix(in srgb,var(--ac) 45%,transparent);padding:11px;font-weight:600}
+.next:hover{background:color-mix(in srgb,var(--ac) 8%,transparent)}

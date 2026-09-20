@@ -65,6 +65,8 @@ function addProfession(S, prof) {
 function removeProfession(S, prof) {
   S.profs = S.profs.filter(function (p) { return p !== prof; });
   S.services = S.services.filter(function (s) { return s.prof !== prof; });
+  var keep = {}; S.profs.forEach(function (k) { PROFS[k].equip.forEach(function (n) { keep[n] = 1; }); });
+  S.equip = S.equip.filter(function (e) { return e.on || e.price > 0 || keep[e.name] || PROFS[prof].equip.indexOf(e.name) < 0; });
 }
 
 /* ---------- Отрисовка (пересобирается только при структурных изменениях) ---------- */
@@ -150,11 +152,28 @@ function upd() {
   $("tbl").innerHTML = R.rows.length ? '<table><tr><th>Услуга</th><th>Себестоим.</th><th>Мин. цена</th><th>Прибыль</th><th>Рент.</th></tr>' + R.rows.map(function (r) {
     return '<tr><td>' + esc(r.name) + '</td><td>' + rub(r.cost) + '</td><td>' + (r.minPrice === null ? "-" : rub(r.minPrice)) + '</td><td class="' + (r.profitPer !== null && r.profitPer < 0 ? "bad" : "") + '">' + (r.profitPer === null ? "-" : rub(r.profitPer)) + '</td><td>' + (r.margin === null ? "-" : pct(r.margin)) + '</td></tr>';
   }).join("") + '</table>' : "";
+  markDone(S, R);
   var n = "";
   if (!R.rows.length) n = "Отметь услугу и впиши, сколько у неё клиентов в месяц.";
   else if (!R.allPriced) n = "Впиши цену у каждой включённой услуги, чтобы увидеть прибыль и рентабельность.";
   else n = R.profit >= 0 ? '<span class="ok">Кабинет в плюсе.</span> Мин. цена считается с учётом желаемой прибыли ' + S.profit + '%.' : '<span class="bad">При таких ценах кабинет в минусе.</span>';
   $("note").innerHTML = n;
+}
+
+/* ---------- Отметки «заполнено» у сворачиваемых блоков ---------- */
+function markDone(S, R) {
+  var ok = [
+    S.profs.length > 0,
+    S.services.some(function (s) { return s.on && s.price > 0 && s.clients > 0; }),
+    S.equip.some(function (e) { return e.on && e.price > 0 && e.years > 0; }),
+    S.train.some(function (t) { return t.price > 0 && t.months > 0; }),
+    S.fixed.some(function (f) { return f.monthly > 0; }),
+    S.tax > 0
+  ];
+  document.querySelectorAll("details.sec").forEach(function (d) {
+    var i = parseInt(d.dataset.sec, 10) - 1, el = d.querySelector(".done");
+    if (el) el.textContent = ok[i] ? "✓ заполнено" : "";
+  });
 }
 
 /* ---------- Итог и анонимный снимок ---------- */
@@ -228,6 +247,13 @@ function stateFromHash(P) {
   $("addTr").onclick = function () { readAll(); S_.train.push({ name: "", price: 0, months: 12 }); buildTrain(S_); upd(); };
   $("addFx").onclick = function () { readAll(); S_.fixed.push({ name: "", monthly: 0 }); buildFixed(S_); upd(); };
   $("show").onclick = show;
+  document.querySelectorAll("details.sec .next").forEach(function (b) {
+    b.onclick = function () {
+      var d = b.closest("details.sec"); d.open = false;
+      var nx = d.nextElementSibling; while (nx && !(nx.matches && nx.matches("details.sec"))) nx = nx.nextElementSibling;
+      if (nx) { nx.open = true; nx.scrollIntoView({ behavior: "smooth", block: "start" }); }
+    };
+  });
   document.addEventListener("input", function (e) { if (e.target.closest && e.target.closest("#svcList,#equip,#train,#fixed")) upd(); });
   document.addEventListener("change", function (e) { if (e.target.closest && e.target.closest("#svcList,#equip")) upd(); });
   upd();

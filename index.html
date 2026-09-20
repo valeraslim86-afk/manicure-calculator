@@ -17,44 +17,44 @@
 </div></header>
 <main class="container layout">
 <div>
-  <section class="card">
-    <h2>1. Чем ты занимаешься</h2>
+  <details class="card sec" open data-sec="1">
+    <summary><h2>1. Чем ты занимаешься</h2><span class="done"></span></summary>
     <p class="hint">Можно отметить несколько. Для каждого профиля подставятся типовые услуги, материалы и оборудование, цены впишешь ты.</p>
     <div class="chips" id="chips"></div>
-  </section>
-  <section class="card">
-    <h2>2. Услуги</h2>
+  <button type="button" class="next">Готово, дальше</button></details>
+  <details class="card sec" open data-sec="2">
+    <summary><h2>2. Услуги</h2><span class="done"></span></summary>
     <p class="hint">Раскрой услугу, впиши цену, число клиентов в месяц, оплату мастера и материалы. Ненужное выключи галочкой.</p>
     <div id="svcList"></div>
-  </section>
-  <section class="card">
-    <h2>3. Оборудование и мебель</h2>
+  <button type="button" class="next">Готово, дальше</button></details>
+  <details class="card sec" open data-sec="3">
+    <summary><h2>3. Оборудование и мебель</h2><span class="done"></span></summary>
     <p class="hint">Отметь галочкой, что у тебя есть, впиши цену и срок службы: амортизация в месяц посчитается сама (цена ÷ срок в месяцах).</p>
     <div class="row eq head"><div></div><div>Что</div><div>Цена, ₽</div><div>Срок, лет</div><div>В месяц</div><div></div></div>
     <div id="equip"></div>
     <button class="add" type="button" id="addEq">+ добавить оборудование</button>
-  </section>
-  <section class="card">
-    <h2>4. Обучение</h2>
+  <button type="button" class="next">Готово, дальше</button></details>
+  <details class="card sec" open data-sec="4">
+    <summary><h2>4. Обучение</h2><span class="done"></span></summary>
     <p class="hint">Сколько потратила на учёбу и за сколько месяцев хочешь её окупить: обучение попадёт в стоимость услуг.</p>
     <div class="row tr head"><div>Что</div><div>Стоимость, ₽</div><div>Окупать, мес.</div><div>В месяц</div><div></div></div>
     <div id="train"></div>
     <button class="add" type="button" id="addTr">+ добавить обучение</button>
-  </section>
-  <section class="card">
-    <h2>5. Аренда и другие постоянные расходы</h2>
+  <button type="button" class="next">Готово, дальше</button></details>
+  <details class="card sec" open data-sec="5">
+    <summary><h2>5. Аренда и другие постоянные расходы</h2><span class="done"></span></summary>
     <p class="hint">Всё, что платишь каждый месяц независимо от числа клиентов.</p>
     <div class="row f head"><div>Что</div><div>₽ в месяц</div><div></div></div>
     <div id="fixed"></div>
     <button class="add" type="button" id="addFx">+ добавить расход</button>
-  </section>
-  <section class="card">
-    <h2>6. Налоги и цель</h2>
+  <button type="button" class="next">Готово, дальше</button></details>
+  <details class="card sec" open data-sec="6">
+    <summary><h2>6. Налоги и цель</h2><span class="done"></span></summary>
     <label for="tax">Налоги и комиссии, % от цены (самозанятый 4-6%, УСН 6%, эквайринг около 2%)</label>
     <input id="tax" type="number" min="0" max="60" step="0.1" value="" inputmode="decimal">
     <label for="profit">Желаемая прибыль, % от цены</label>
     <input id="profit" type="number" min="0" max="90" value="30" inputmode="decimal">
-  </section>
+  </details>
 </div>
 <aside class="sticky">
   <section class="card">
