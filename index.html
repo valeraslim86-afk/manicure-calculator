@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>Калькулятор себестоимости маникюра</title>
+<meta name="description" content="Впиши расходы и цену, и калькулятор покажет себестоимость услуги, минимальную цену и точку безубыточности.">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header class="hero"><div class="container">
+  <span class="badge">Калькулятор для мастера</span>
+  <h1>Сколько на самом деле стоит твой маникюр</h1>
+  <p class="lead">Впиши расходы и цену, справа сразу увидишь себестоимость, минимальную цену и сколько клиентов нужно в месяц. Данные остаются в твоём телефоне.</p>
+  <div class="steps"><div class="step"><b>1</b>Материалы</div><div class="step"><b>2</b>Постоянные расходы</div><div class="step"><b>3</b>Цена и налоги</div></div>
+</div></header>
+<main class="container layout">
+<div>
+  <section class="card">
+    <h2>1. Материалы на одного клиента</h2>
+    <p class="hint">«Цена» - за упаковку, «В упаковке» - сколько штук, мл или г, «На клиента» - сколько уходит на один маникюр в тех же единицах. Знаешь только сумму за месяц? Впиши её в «Цена», число клиентов в «В упаковке» и 1 в «На клиента».</p>
+    <div class="row head"><div>Что</div><div>Цена, ₽</div><div>В упаковке</div><div>На клиента</div><div></div></div>
+    <div id="direct"></div>
+    <button class="add" type="button" id="addD">+ добавить материал</button>
+  </section>
+  <section class="card">
+    <h2>2. Постоянные расходы в месяц</h2>
+    <p class="hint">Аренда, обучение, оборудование. Для оборудования: цена ÷ на сколько месяцев хватит (лампа 28 000 ₽ на 60 месяцев = 467 ₽ в месяц).</p>
+    <div class="row f head"><div>Что</div><div>₽ в месяц</div><div></div></div>
+    <div id="fixed"></div>
+    <button class="add" type="button" id="addF">+ добавить расход</button>
+  </section>
+  <section class="card">
+    <h2>3. Мастер, налоги, цена</h2>
+    <div class="two">
+      <div><label for="labor">Оплата мастера</label><input id="labor" type="number" min="0" value="0" inputmode="decimal"></div>
+      <div><label for="laborMode">Как считается</label><select id="laborMode"><option value="rub">₽ за услугу</option><option value="pct">% от цены</option></select></div>
+    </div>
+    <label for="tax">Налоги и комиссии, % от цены (самозанятый 4-6%, УСН 6%, эквайринг около 2%)</label>
+    <input id="tax" type="number" min="0" max="60" step="0.1" value="0" inputmode="decimal">
+    <label for="profit">Желаемая прибыль, % от цены</label>
+    <input id="profit" type="number" min="0" max="90" value="30" inputmode="decimal">
+    <label for="price">Цена услуги для клиента: <b id="priceV"></b> ₽</label>
+    <input id="price" type="range" min="0" max="10000" step="50" value="0">
+    <input id="priceN" type="number" min="0" placeholder="или впиши цену цифрами" inputmode="decimal" style="margin-top:6px">
+    <label for="cli">Клиентов в месяц: <b id="cliV"></b></label>
+    <input id="cli" type="range" min="1" max="120" step="1" value="30">
+  </section>
+</div>
+<aside class="sticky">
+  <section class="card">
+    <h2>Результат</h2>
+    <p class="hint">Считается сразу, пока вводишь.</p>
+    <div class="kpi" id="kpi"></div>
+    <div class="bar" id="bar"></div>
+    <div class="leg" id="leg"></div>
+    <div class="note" id="note"></div>
+  </section>
+  <section class="card">
+    <h2>Отправить расчёт</h2>
+    <p class="hint">По желанию. Кнопка покажет расчёт текстом: скопируй его и вставь в диалог.</p>
+    <button class="btn" type="button" id="send">Отправить мне расчёт</button>
+    <div id="msg"></div>
+  </section>
+</aside>
+</main>
+<section class="container">
+  <div class="cta">
+    <div>
+      <span class="badge">Автоматизация для бизнеса</span>
+      <h2>Нужен такой же инструмент для своего дела?</h2>
+      <p>Калькуляторы, расчёты, боты, отчёты и автоматизация рутины: беру задачи малого бизнеса и частных мастеров. Напиши, что хочешь упростить, отвечу по делу.</p>
+    </div>
+    <div class="cta-links">
+      <a href="mailto:valeraslim86@gmail.com">valeraslim86@gmail.com</a>
+    </div>
+  </div>
+</section>
+<footer>Расчёт ориентировочный. Все цифры считаются в твоём браузере и никуда не отправляются.</footer>
+<script src="app.js"></script>
+</body>
+</html>
