@@ -1,81 +1,177 @@
-/* Калькулятор себестоимости. Без сервера: всё считается в браузере.
-   Готовые цифры можно передать ссылкой: index.html#p=<base64url(JSON)>. Фрагмент после # на сервер не уходит. */
-var OWNER_VK = "8499740"; /* публичный id страницы ВК, куда открывается диалог */
-var DEFAULT_D = ["База", "Гель-лак", "Топ", "Перчатки", "Антисептик", "Пилка", "Баф"].map(function (n) { return [n, "", "", ""]; });
-var DEFAULT_F = [["Аренда", ""], ["Оборудование (лампа), в месяц", ""]];
+/* Мультикалькулятор рентабельности бьюти-услуг. Без сервера: всё считается в браузере.
+   Готовые цифры можно передать ссылкой: index.html#p=<base64url(JSON)> (фрагмент после # на сервер не уходит).
+   Данные: PROFS и COMMON из presets.js. */
+var OWNER_VK = "8499740";
+var CONFIG = { collectUrl: "" }; /* адрес приёма анонимной статистики; пусто = сбор выключен, блока согласия нет */
 
 function $(i) { return document.getElementById(i); }
 function num(v) { var n = parseFloat(String(v).replace(/\s/g, "").replace(",", ".")); return isFinite(n) && n > 0 ? n : 0; }
 function rub(x) { return Math.round(x).toLocaleString("ru-RU") + " ₽"; }
-function esc(s) { return String(s).replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/</g, "&lt;"); }
+function pct(x) { return (Math.round(x * 10) / 10).toLocaleString("ru-RU") + "%"; }
+function esc(s) { return String(s == null ? "" : s).replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/</g, "&lt;"); }
 
-/* Ядро расчёта: те же формулы, что в калькулятор.py */
-function calc(direct, fixed, o) {
-  var d = 0, f = 0, i;
-  for (i = 0; i < direct.length; i++) { var r = direct[i]; if (r.vol > 0) d += r.price / r.vol * r.use; }
-  for (i = 0; i < fixed.length; i++) f += fixed[i];
-  var fps = o.cli > 0 ? f / o.cli : 0;
-  var laborRub = o.mode === "rub" ? o.labor : 0, laborPct = o.mode === "pct" ? o.labor / 100 : 0;
-  var taxPct = o.tax / 100, prof = o.profit / 100;
-  var lab = laborRub + laborPct * o.price, tx = taxPct * o.price;
-  var cost = d + fps + lab + tx, base = d + fps + laborRub;
-  var z = 1 - laborPct - taxPct, den = z - prof;
-  var contr = o.price > 0 ? o.price * z - d - laborRub : null;
-  var be = (contr && contr > 0) ? f / contr : null;
-  var pp = o.price > 0 ? o.price - cost : null;
-  return { direct: d, fixedMonth: f, fixedPer: fps, labor: lab, tax: tx, cost: cost, base: base,
-    minZero: z > 0 ? base / z : null, minPrice: den > 0 ? base / den : null, be: be,
-    profitPer: pp, profitMonth: pp === null ? null : pp * o.cli };
+/* ---------- Ядро расчёта (те же формулы, что в калькулятор.py, плюс общие расходы кабинета) ---------- */
+function calcAll(S) {
+  var equipMonth = 0, equipInvest = 0, trainMonth = 0, trainInvest = 0, fixedMonth = 0, i;
+  S.equip.forEach(function (e) { if (e.on && e.price > 0 && e.years > 0) { equipMonth += e.price / (e.years * 12); equipInvest += e.price; } });
+  S.train.forEach(function (t) { if (t.price > 0 && t.months > 0) { trainMonth += t.price / t.months; trainInvest += t.price; } });
+  S.fixed.forEach(function (f) { fixedMonth += f.monthly; });
+  var F = equipMonth + trainMonth + fixedMonth;
+  var act = S.services.filter(function (s) { return s.on && s.clients > 0; });
+  var totalClients = act.reduce(function (a, s) { return a + s.clients; }, 0);
+  var fpc = totalClients > 0 ? F / totalClients : 0;
+  var tax = S.tax / 100, prof = S.profit / 100;
+  var rows = [], revenue = 0, profit = 0, contrSum = 0, allPriced = true;
+  act.forEach(function (s) {
+    var d = 0; s.mats.forEach(function (m) { if (m.vol > 0) d += m.price / m.vol * m.use; });
+    var lRub = s.mode === "rub" ? s.labor : 0, lPct = s.mode === "pct" ? s.labor / 100 : 0;
+    var labor = lRub + lPct * s.price, tx = tax * s.price;
+    var cost = d + fpc + labor + tx, base = d + fpc + lRub, z = 1 - lPct - tax, den = z - prof;
+    var pp = s.price > 0 ? s.price - cost : null;
+    if (s.price <= 0) allPriced = false;
+    var contr = s.price > 0 ? s.price * z - d - lRub : 0;
+    revenue += s.price * s.clients; if (pp !== null) profit += pp * s.clients; contrSum += contr * s.clients;
+    rows.push({ name: s.name, clients: s.clients, price: s.price, direct: d, fpc: fpc, labor: labor, tax: tx, cost: cost,
+      minZero: z > 0 ? base / z : null, minPrice: den > 0 ? base / den : null, profitPer: pp,
+      margin: (pp !== null && s.price > 0) ? pp / s.price * 100 : null });
+  });
+  var avgContr = totalClients > 0 ? contrSum / totalClients : 0;
+  var be = (allPriced && avgContr > 0) ? F / avgContr : null;
+  var prBefore = profit + equipMonth + trainMonth;
+  return { F: F, equipMonth: equipMonth, trainMonth: trainMonth, fixedMonth: fixedMonth, totalClients: totalClients, fpc: fpc, rows: rows,
+    revenue: revenue, profit: allPriced && rows.length ? profit : null, margin: (allPriced && revenue > 0) ? profit / revenue * 100 : null,
+    breakEven: be, payback: (allPriced && prBefore > 0 && (equipInvest + trainInvest) > 0) ? (equipInvest + trainInvest) / prBefore : null,
+    invest: equipInvest + trainInvest, allPriced: allPriced };
 }
 
-function readDirect() { var r = []; document.querySelectorAll("#direct .row").forEach(function (e) { var v = e.querySelectorAll("input"); r.push({ name: v[0].value || "материал", price: num(v[1].value), vol: num(v[2].value), use: num(v[3].value) }); }); return r; }
-function readFixed() { var r = [], n = []; document.querySelectorAll("#fixed .row").forEach(function (e) { var v = e.querySelectorAll("input"); r.push(num(v[1].value)); n.push(v[0].value || "расход"); }); return { v: r, n: n }; }
-function addD(v) { v = (v && v.length) ? v : ["", "", "", ""]; var e = document.createElement("div"); e.className = "row"; e.innerHTML = '<input value="' + esc(v[0]) + '" placeholder="Название"><input type="number" min="0" inputmode="decimal" value="' + esc(v[1]) + '"><input type="number" min="0" inputmode="decimal" value="' + esc(v[2]) + '"><input type="number" min="0" step="any" inputmode="decimal" value="' + esc(v[3]) + '"><button class="x" type="button" title="Убрать">×</button>'; e.querySelector("button").onclick = function () { e.remove(); upd(); }; e.oninput = upd; $("direct").appendChild(e); }
-function addF(v) { v = (v && v.length) ? v : ["", ""]; var e = document.createElement("div"); e.className = "row f"; e.innerHTML = '<input value="' + esc(v[0]) + '" placeholder="Название"><input type="number" min="0" inputmode="decimal" value="' + esc(v[1]) + '"><button class="x" type="button" title="Убрать">×</button>'; e.querySelector("button").onclick = function () { e.remove(); upd(); }; e.oninput = upd; $("fixed").appendChild(e); }
-function opts() { return { labor: num($("labor").value), mode: $("laborMode").value, tax: num($("tax").value), profit: num($("profit").value), price: num($("price").value), cli: num($("cli").value) || 1 }; }
+/* ---------- Состояние ---------- */
+var uid = 0;
+function newService(prof, name) {
+  var p = PROFS[prof];
+  return { id: "s" + (++uid), prof: prof, name: name, on: true, price: 0, clients: 0, labor: 0, mode: "rub",
+    mats: p.mats.map(function (n) { return { name: n, price: 0, vol: 0, use: 0 }; }) };
+}
+function emptyState() { return { profs: [], services: [], equip: [], train: [], fixed: [], tax: 0, profit: 30 }; }
+function hasName(list, name) { return list.some(function (x) { return x.name === name; }); }
+function addProfession(S, prof) {
+  if (S.profs.indexOf(prof) >= 0) return;
+  S.profs.push(prof);
+  var p = PROFS[prof];
+  p.services.forEach(function (n, i) { var s = newService(prof, n); s.on = i === 0; S.services.push(s); });
+  p.equip.forEach(function (n) { if (!hasName(S.equip, n)) S.equip.push({ name: n, price: 0, years: 5, on: false }); });
+  if (!S.train.length) COMMON.train.forEach(function (n) { S.train.push({ name: n, price: 0, months: 12 }); });
+  if (!S.fixed.length) COMMON.fixed.forEach(function (n) { S.fixed.push({ name: n, monthly: 0 }); });
+}
+function removeProfession(S, prof) {
+  S.profs = S.profs.filter(function (p) { return p !== prof; });
+  S.services = S.services.filter(function (s) { return s.prof !== prof; });
+}
 
+/* ---------- Отрисовка (пересобирается только при структурных изменениях) ---------- */
+function rowMat(m) { return '<div class="row"><input class="mn" value="' + esc(m.name) + '" placeholder="Название"><input class="mp" type="number" min="0" inputmode="decimal" value="' + (m.price || "") + '"><input class="mv" type="number" min="0" inputmode="decimal" value="' + (m.vol || "") + '"><input class="mu" type="number" min="0" step="any" inputmode="decimal" value="' + (m.use || "") + '"><button class="x" type="button" title="Убрать">×</button></div>'; }
+function buildServices(S) {
+  $("svcList").innerHTML = S.services.map(function (s) {
+    return '<details class="svc" data-id="' + s.id + '" data-prof="' + s.prof + '"' + (s.on ? " open" : "") + '>' +
+      '<summary><label class="chk" onclick="event.stopPropagation()"><input type="checkbox" class="son"' + (s.on ? " checked" : "") + '></label><input class="sname" value="' + esc(s.name) + '" onclick="event.stopPropagation()"><span class="tag">' + esc(PROFS[s.prof].name) + '</span></summary>' +
+      '<div class="svc-body"><div class="two"><div><label>Цена для клиента, ₽</label><input class="sprice" type="number" min="0" inputmode="decimal" value="' + (s.price || "") + '"></div><div><label>Клиентов в месяц</label><input class="scli" type="number" min="0" inputmode="decimal" value="' + (s.clients || "") + '"></div></div>' +
+      '<div class="two"><div><label>Оплата мастера</label><input class="slab" type="number" min="0" inputmode="decimal" value="' + (s.labor || "") + '"></div><div><label>Как считается</label><select class="smode"><option value="rub"' + (s.mode === "rub" ? " selected" : "") + '>₽ за услугу</option><option value="pct"' + (s.mode === "pct" ? " selected" : "") + '>% от цены</option></select></div></div>' +
+      '<p class="hint" style="margin-top:12px">Материалы на одного клиента. «Цена» за упаковку, «В упаковке» сколько штук, мл или г, «На клиента» сколько уходит на одну услугу.</p>' +
+      '<div class="row head"><div>Что</div><div>Цена, ₽</div><div>В упаковке</div><div>На клиента</div><div></div></div><div class="mats">' + s.mats.map(rowMat).join("") + '</div>' +
+      '<button class="add addmat" type="button">+ добавить материал</button><button class="link delsvc" type="button">Удалить услугу</button></div></details>';
+  }).join("") || '<p class="hint">Выбери профиль выше, и здесь появятся типовые услуги.</p>';
+  document.querySelectorAll(".svc").forEach(function (el) {
+    el.querySelector(".addmat").onclick = function () { el.querySelector(".mats").insertAdjacentHTML("beforeend", rowMat({ name: "", price: 0, vol: 0, use: 0 })); bindMats(el); upd(); };
+    el.querySelector(".delsvc").onclick = function () { readAll(); S_.services = S_.services.filter(function (s) { return s.id !== el.dataset.id; }); buildServices(S_); upd(); };
+    bindMats(el);
+  });
+}
+function bindMats(el) { el.querySelectorAll(".mats .x").forEach(function (b) { b.onclick = function () { b.parentNode.remove(); upd(); }; }); }
+function buildEquip(S) {
+  $("equip").innerHTML = S.equip.map(function (e) {
+    return '<div class="row eq"><label class="chk"><input type="checkbox" class="eon"' + (e.on ? " checked" : "") + '></label><input class="en" value="' + esc(e.name) + '" placeholder="Название"><input class="ep" type="number" min="0" inputmode="decimal" placeholder="Цена, ₽" value="' + (e.price || "") + '"><input class="ey" type="number" min="0" step="any" inputmode="decimal" placeholder="Срок, лет" value="' + (e.years || "") + '"><span class="am"></span><button class="x" type="button" title="Убрать">×</button></div>';
+  }).join("");
+  $("equip").querySelectorAll(".x").forEach(function (b) { b.onclick = function () { b.parentNode.remove(); upd(); }; });
+}
+function buildTrain(S) {
+  $("train").innerHTML = S.train.map(function (t) {
+    return '<div class="row tr"><input class="tn" value="' + esc(t.name) + '" placeholder="Название"><input class="tp" type="number" min="0" inputmode="decimal" placeholder="Стоимость, ₽" value="' + (t.price || "") + '"><input class="tm" type="number" min="1" inputmode="decimal" placeholder="Окупать, мес." value="' + (t.months || "") + '"><span class="am"></span><button class="x" type="button" title="Убрать">×</button></div>';
+  }).join("");
+  $("train").querySelectorAll(".x").forEach(function (b) { b.onclick = function () { b.parentNode.remove(); upd(); }; });
+}
+function buildFixed(S) {
+  $("fixed").innerHTML = S.fixed.map(function (f) {
+    return '<div class="row f"><input class="fn" value="' + esc(f.name) + '" placeholder="Название"><input class="fm" type="number" min="0" inputmode="decimal" placeholder="₽ в месяц" value="' + (f.monthly || "") + '"><button class="x" type="button" title="Убрать">×</button></div>';
+  }).join("");
+  $("fixed").querySelectorAll(".x").forEach(function (b) { b.onclick = function () { b.parentNode.remove(); upd(); }; });
+}
+function buildAll(S) {
+  document.querySelectorAll(".chip input").forEach(function (c) { c.checked = S.profs.indexOf(c.value) >= 0; });
+  buildServices(S); buildEquip(S); buildTrain(S); buildFixed(S);
+  $("tax").value = S.tax || ""; $("profit").value = S.profit;
+}
+
+/* ---------- Чтение формы ---------- */
+var S_ = emptyState();
+function readAll() {
+  var S = S_;
+  var byId = {}; S.services.forEach(function (s) { byId[s.id] = s; });
+  document.querySelectorAll(".svc").forEach(function (el) {
+    var s = byId[el.dataset.id]; if (!s) return;
+    s.on = el.querySelector(".son").checked; s.name = el.querySelector(".sname").value || s.name;
+    s.price = num(el.querySelector(".sprice").value); s.clients = num(el.querySelector(".scli").value);
+    s.labor = num(el.querySelector(".slab").value); s.mode = el.querySelector(".smode").value;
+    s.mats = []; el.querySelectorAll(".mats .row").forEach(function (r) { s.mats.push({ name: r.querySelector(".mn").value || "материал", price: num(r.querySelector(".mp").value), vol: num(r.querySelector(".mv").value), use: num(r.querySelector(".mu").value) }); });
+  });
+  S.equip = []; document.querySelectorAll("#equip .row").forEach(function (r) { S.equip.push({ name: r.querySelector(".en").value || "оборудование", price: num(r.querySelector(".ep").value), years: num(r.querySelector(".ey").value), on: r.querySelector(".eon").checked }); });
+  S.train = []; document.querySelectorAll("#train .row").forEach(function (r) { S.train.push({ name: r.querySelector(".tn").value || "обучение", price: num(r.querySelector(".tp").value), months: num(r.querySelector(".tm").value) }); });
+  S.fixed = []; document.querySelectorAll("#fixed .row").forEach(function (r) { S.fixed.push({ name: r.querySelector(".fn").value || "расход", monthly: num(r.querySelector(".fm").value) }); });
+  S.tax = num($("tax").value); S.profit = num($("profit").value);
+  return S;
+}
+
+/* ---------- Результат ---------- */
 var last = null;
 function upd() {
-  var o = opts(), fx = readFixed(), dr = readDirect(), R = calc(dr, fx.v, o);
-  $("priceV").textContent = o.price; $("cliV").textContent = o.cli;
-  last = { o: o, R: R, dr: dr, fx: fx };
+  var S = readAll(), R = calcAll(S); last = { S: S, R: R };
+  document.querySelectorAll("#equip .row").forEach(function (r, i) { var e = S.equip[i]; r.querySelector(".am").textContent = (e.price > 0 && e.years > 0) ? rub(e.price / (e.years * 12)) + "/мес" : ""; });
+  document.querySelectorAll("#train .row").forEach(function (r, i) { var t = S.train[i]; r.querySelector(".am").textContent = (t.price > 0 && t.months > 0) ? rub(t.price / t.months) + "/мес" : ""; });
   var k = [];
-  k.push(['main', 'Себестоимость услуги', o.price > 0 ? rub(R.cost) : rub(R.base) + (o.tax > 0 || o.mode === "pct" ? " + %" : "")]);
-  k.push(['', 'Цена без прибыли', R.minZero === null ? "-" : rub(R.minZero)]);
-  k.push(['', 'Цена с желаемой прибылью', R.minPrice === null ? "недостижима" : rub(R.minPrice)]);
-  k.push(['', 'Безубыточность', R.be === null ? "нужна цена" : Math.ceil(R.be) + " клиентов/мес"]);
-  if (o.price > 0) k.push(['', 'Прибыль с услуги', rub(R.profitPer)], ['', 'Прибыль в месяц', rub(R.profitMonth)]);
+  k.push(["main", "Прибыль в месяц", R.profit === null ? "нужны цены" : rub(R.profit)]);
+  k.push(["", "Рентабельность", R.margin === null ? "-" : pct(R.margin)]);
+  k.push(["", "Выручка в месяц", R.revenue > 0 ? rub(R.revenue) : "-"]);
+  k.push(["", "Расходы кабинета в месяц", rub(R.F)]);
+  k.push(["", "Безубыточность", R.breakEven === null ? "-" : Math.ceil(R.breakEven) + " клиентов/мес"]);
+  k.push(["", "Окупаемость вложений", R.payback === null ? "-" : (Math.round(R.payback * 10) / 10) + " мес"]);
   $("kpi").innerHTML = k.map(function (x) { return '<div class="k ' + x[0] + '"><span>' + x[1] + '</span><b>' + x[2] + '</b></div>'; }).join("");
-  var parts = [["Материалы", R.direct, "var(--c1)"], ["Постоянные", R.fixedPer, "var(--c2)"], ["Мастер", R.labor, "var(--c3)"], ["Налоги", R.tax, "var(--c4)"]];
+  var parts = [["Оборудование", R.equipMonth, "var(--c2)"], ["Обучение", R.trainMonth, "var(--c3)"], ["Аренда и прочее", R.fixedMonth, "var(--c4)"]];
   var tot = parts.reduce(function (s, p) { return s + p[1]; }, 0) || 1;
   $("bar").innerHTML = parts.map(function (p) { return '<i style="width:' + (p[1] / tot * 100) + '%;background:' + p[2] + '"></i>'; }).join("");
   $("leg").innerHTML = parts.map(function (p) { return '<span><u style="background:' + p[2] + '"></u>' + p[0] + ' ' + rub(p[1]) + '</span>'; }).join("");
+  $("tbl").innerHTML = R.rows.length ? '<table><tr><th>Услуга</th><th>Себестоим.</th><th>Мин. цена</th><th>Прибыль</th><th>Рент.</th></tr>' + R.rows.map(function (r) {
+    return '<tr><td>' + esc(r.name) + '</td><td>' + rub(r.cost) + '</td><td>' + (r.minPrice === null ? "-" : rub(r.minPrice)) + '</td><td class="' + (r.profitPer !== null && r.profitPer < 0 ? "bad" : "") + '">' + (r.profitPer === null ? "-" : rub(r.profitPer)) + '</td><td>' + (r.margin === null ? "-" : pct(r.margin)) + '</td></tr>';
+  }).join("") + '</table>' : "";
   var n = "";
-  if (o.price > 0) n = R.profitPer >= 0 ? '<span class="ok">Цена покрывает затраты.</span>' : '<span class="bad">При такой цене ты работаешь в минус.</span>';
-  else n = "Задай цену ползунком, чтобы увидеть прибыль и безубыточность.";
-  if (R.minPrice === null) n += ' <span class="bad">Мастер, налоги и прибыль вместе дают 100% цены и больше, такой цены не существует.</span>';
+  if (!R.rows.length) n = "Отметь услугу и впиши, сколько у неё клиентов в месяц.";
+  else if (!R.allPriced) n = "Впиши цену у каждой включённой услуги, чтобы увидеть прибыль и рентабельность.";
+  else n = R.profit >= 0 ? '<span class="ok">Кабинет в плюсе.</span> Мин. цена считается с учётом желаемой прибыли ' + S.profit + '%.' : '<span class="bad">При таких ценах кабинет в минусе.</span>';
   $("note").innerHTML = n;
 }
 
 function report() {
-  var L = last, o = L.o, R = L.R, t = [];
-  t.push("Расчёт себестоимости маникюра");
-  t.push("Клиентов в месяц: " + o.cli);
-  t.push("Материалы на 1 клиента: " + rub(R.direct));
-  L.dr.forEach(function (r) { t.push("  - " + r.name + ": " + r.price + " ₽ / " + r.vol + ", на клиента " + r.use); });
-  t.push("Постоянные в месяц: " + rub(R.fixedMonth) + " (на 1 клиента " + rub(R.fixedPer) + ")");
-  L.fx.n.forEach(function (n, i) { t.push("  - " + n + ": " + L.fx.v[i] + " ₽"); });
-  t.push("Мастер: " + o.labor + (o.mode === "rub" ? " ₽ за услугу" : " % от цены") + "; налоги и комиссии: " + o.tax + "%; желаемая прибыль: " + o.profit + "%");
-  t.push("Цена услуги: " + (o.price > 0 ? rub(o.price) : "не задана"));
-  t.push("Себестоимость: " + (o.price > 0 ? rub(R.cost) : rub(R.base) + " + проценты от цены"));
-  t.push("Цена без прибыли: " + (R.minZero === null ? "-" : rub(R.minZero)));
-  t.push("Цена с желаемой прибылью: " + (R.minPrice === null ? "недостижима" : rub(R.minPrice)));
-  t.push("Безубыточность: " + (R.be === null ? "-" : Math.ceil(R.be) + " клиентов в месяц"));
-  if (o.price > 0) t.push("Прибыль: " + rub(R.profitPer) + " с услуги, " + rub(R.profitMonth) + " в месяц");
+  var S = last.S, R = last.R, t = [];
+  t.push("Расчёт рентабельности кабинета");
+  R.rows.forEach(function (r) {
+    t.push("Услуга: " + r.name + ", клиентов " + r.clients + ", цена " + (r.price > 0 ? rub(r.price) : "не задана") + ", себестоимость " + rub(r.cost) + (r.profitPer !== null ? ", прибыль " + rub(r.profitPer) + " (" + pct(r.margin) + ")" : ""));
+  });
+  t.push("Оборудование и мебель, амортизация: " + rub(R.equipMonth) + " в месяц");
+  t.push("Обучение: " + rub(R.trainMonth) + " в месяц");
+  t.push("Аренда и прочие постоянные: " + rub(R.fixedMonth) + " в месяц");
+  t.push("Налоги и комиссии: " + S.tax + "%; желаемая прибыль: " + S.profit + "%");
+  t.push("Выручка: " + (R.revenue > 0 ? rub(R.revenue) : "-") + "; прибыль в месяц: " + (R.profit === null ? "-" : rub(R.profit)) + "; рентабельность: " + (R.margin === null ? "-" : pct(R.margin)));
   return t.join("\n");
 }
-
 function send() {
+  if (!last) upd();
   var txt = report(), m = $("msg");
   window.open("https://vk.com/write" + OWNER_VK, "_blank");
   m.innerHTML = "";
@@ -92,6 +188,7 @@ function send() {
   b.click();
 }
 
+/* ---------- Ссылка с готовыми цифрами (в том числе старого формата #p= {d,f,cli}) ---------- */
 function fromHash() {
   try {
     var m = /[#&]p=([A-Za-z0-9_-]+)/.exec(location.hash); if (!m) return null;
@@ -99,15 +196,34 @@ function fromHash() {
     return JSON.parse(decodeURIComponent(escape(atob(s))));
   } catch (e) { return null; }
 }
+function stateFromHash(P) {
+  var S = emptyState();
+  if (P.v === 2) { return P.S; }
+  addProfession(S, "manicure");
+  var s = S.services[0]; s.name = "Маникюр"; s.on = true; s.clients = P.cli || 0;
+  s.mats = (P.d || []).map(function (r) { return { name: r[0], price: num(r[1]), vol: num(r[2]), use: num(r[3]) }; });
+  S.fixed = []; (P.f || []).forEach(function (r) { S.fixed.push({ name: r[0], monthly: num(r[1]) }); });
+  S.equip.forEach(function (e) { e.on = false; });
+  return S;
+}
 
-var P = fromHash() || {};
-(P.d || DEFAULT_D).forEach(addD);
-(P.f || DEFAULT_F).forEach(addF);
-if (P.cli) $("cli").value = P.cli;
-$("addD").onclick = function () { addD(); };
-$("addF").onclick = function () { addF(); };
-$("send").onclick = send;
-["labor", "laborMode", "tax", "profit", "cli"].forEach(function (i) { $(i).oninput = upd; });
-$("price").oninput = function () { $("priceN").value = ""; upd(); };
-$("priceN").oninput = function () { var v = num($("priceN").value); $("price").max = Math.max(10000, v); $("price").value = v; upd(); };
-upd();
+/* ---------- Запуск ---------- */
+(function init() {
+  var box = $("chips");
+  box.innerHTML = Object.keys(PROFS).map(function (k) { return '<label class="chip"><input type="checkbox" value="' + k + '"><span>' + PROFS[k].name + '</span></label>'; }).join("");
+  box.querySelectorAll("input").forEach(function (c) {
+    c.onchange = function () { readAll(); if (c.checked) addProfession(S_, c.value); else removeProfession(S_, c.value); buildAll(S_); upd(); };
+  });
+  var P = fromHash();
+  if (P) { S_ = stateFromHash(P); } else { addProfession(S_, "manicure"); }
+  S_.services.forEach(function (s) { var n = parseInt(String(s.id).slice(1), 10); if (n > uid) uid = n; });
+  buildAll(S_);
+  ["tax", "profit"].forEach(function (i) { $(i).oninput = upd; });
+  $("addEq").onclick = function () { readAll(); S_.equip.push({ name: "", price: 0, years: 5, on: true }); buildEquip(S_); upd(); };
+  $("addTr").onclick = function () { readAll(); S_.train.push({ name: "", price: 0, months: 12 }); buildTrain(S_); upd(); };
+  $("addFx").onclick = function () { readAll(); S_.fixed.push({ name: "", monthly: 0 }); buildFixed(S_); upd(); };
+  $("send").onclick = send;
+  document.addEventListener("input", function (e) { if (e.target.closest && e.target.closest("#svcList,#equip,#train,#fixed")) upd(); });
+  document.addEventListener("change", function (e) { if (e.target.closest && e.target.closest("#svcList,#equip")) upd(); });
+  upd();
+})();
