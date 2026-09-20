@@ -2,7 +2,7 @@
    Готовые цифры можно передать ссылкой: index.html#p=<base64url(JSON)> (фрагмент после # на сервер не уходит).
    Данные: PROFS и COMMON из presets.js. */
 var OWNER_VK = "8499740";
-var CONFIG = { collectUrl: "" }; /* адрес приёма анонимной статистики; пусто = сбор выключен, блока согласия нет */
+var CONFIG = { collectUrl: "https://beauty-calc-collector.valeraslim86.workers.dev" }; /* приём анонимной статистики (Cloudflare Worker + D1); пусто = сбор выключен */
 
 function $(i) { return document.getElementById(i); }
 function num(v) { var n = parseFloat(String(v).replace(/\s/g, "").replace(",", ".")); return isFinite(n) && n > 0 ? n : 0; }
