@@ -70,13 +70,13 @@ function removeProfession(S, prof) {
 }
 
 /* ---------- Отрисовка (пересобирается только при структурных изменениях) ---------- */
-function rowMat(m) { return '<div class="row"><input class="mn" value="' + esc(m.name) + '" placeholder="Название"><input class="mp" type="number" min="0" inputmode="decimal" value="' + (m.price || "") + '"><input class="mv" type="number" min="0" inputmode="decimal" value="' + (m.vol || "") + '"><input class="mu" type="number" min="0" step="any" inputmode="decimal" value="' + (m.use || "") + '"><button class="x" type="button" title="Убрать">×</button></div>'; }
+function rowMat(m) { return '<div class="row"><input class="mn" value="' + esc(m.name) + '" placeholder="Название"><input class="mp" type="text" inputmode="decimal" value="' + (m.price || "") + '"><input class="mv" type="text" inputmode="decimal" value="' + (m.vol || "") + '"><input class="mu" type="text" inputmode="decimal" value="' + (m.use || "") + '"><button class="x" type="button" title="Убрать">×</button></div>'; }
 function buildServices(S) {
   $("svcList").innerHTML = S.services.map(function (s) {
     return '<details class="svc" data-id="' + s.id + '" data-prof="' + s.prof + '"' + (s.on ? " open" : "") + '>' +
       '<summary><label class="chk" onclick="event.stopPropagation()"><input type="checkbox" class="son"' + (s.on ? " checked" : "") + '></label><input class="sname" value="' + esc(s.name) + '" onclick="event.stopPropagation()"><span class="tag">' + esc(PROFS[s.prof].name) + '</span></summary>' +
-      '<div class="svc-body"><div class="two"><div><label>Цена для клиента, ₽</label><input class="sprice" type="number" min="0" inputmode="decimal" value="' + (s.price || "") + '"></div><div><label>Клиентов в месяц</label><input class="scli" type="number" min="0" inputmode="decimal" value="' + (s.clients || "") + '"></div></div>' +
-      '<div class="two"><div><label>Оплата мастера</label><input class="slab" type="number" min="0" inputmode="decimal" value="' + (s.labor || "") + '"></div><div><label>Как считается</label><select class="smode"><option value="rub"' + (s.mode === "rub" ? " selected" : "") + '>₽ за услугу</option><option value="pct"' + (s.mode === "pct" ? " selected" : "") + '>% от цены</option></select></div></div>' +
+      '<div class="svc-body"><div class="two"><div><label>Цена для клиента, ₽</label><input class="sprice" type="text" inputmode="decimal" value="' + (s.price || "") + '"></div><div><label>Клиентов в месяц</label><input class="scli" type="text" inputmode="decimal" value="' + (s.clients || "") + '"></div></div>' +
+      '<div class="two"><div><label>Оплата мастера</label><input class="slab" type="text" inputmode="decimal" value="' + (s.labor || "") + '"></div><div><label>Как считается</label><select class="smode"><option value="rub"' + (s.mode === "rub" ? " selected" : "") + '>₽ за услугу</option><option value="pct"' + (s.mode === "pct" ? " selected" : "") + '>% от цены</option></select></div></div>' +
       '<p class="hint" style="margin-top:12px">Материалы на одного клиента. «Цена» за упаковку, «В упаковке» сколько штук, мл или г, «На клиента» сколько уходит на одну услугу.</p>' +
       '<div class="row head"><div>Что</div><div>Цена, ₽</div><div>В упаковке</div><div>На клиента</div><div></div></div><div class="mats">' + s.mats.map(rowMat).join("") + '</div>' +
       '<button class="add addmat" type="button">+ добавить материал</button><button class="link delsvc" type="button">Удалить услугу</button></div></details>';
@@ -90,19 +90,19 @@ function buildServices(S) {
 function bindMats(el) { el.querySelectorAll(".mats .x").forEach(function (b) { b.onclick = function () { b.parentNode.remove(); upd(); }; }); }
 function buildEquip(S) {
   $("equip").innerHTML = S.equip.map(function (e) {
-    return '<div class="row eq"><label class="chk"><input type="checkbox" class="eon"' + (e.on ? " checked" : "") + '></label><input class="en" value="' + esc(e.name) + '" placeholder="Название"><input class="ep" type="number" min="0" inputmode="decimal" placeholder="Цена, ₽" value="' + (e.price || "") + '"><input class="ey" type="number" min="0" step="any" inputmode="decimal" placeholder="Срок, лет" value="' + (e.years || "") + '"><span class="am"></span><button class="x" type="button" title="Убрать">×</button></div>';
+    return '<div class="row eq"><label class="chk"><input type="checkbox" class="eon"' + (e.on ? " checked" : "") + '></label><input class="en" value="' + esc(e.name) + '" placeholder="Название"><input class="ep" type="text" inputmode="decimal" placeholder="Цена, ₽" value="' + (e.price || "") + '"><input class="ey" type="text" inputmode="decimal" placeholder="Срок, лет" value="' + (e.years || "") + '"><span class="am"></span><button class="x" type="button" title="Убрать">×</button></div>';
   }).join("");
   $("equip").querySelectorAll(".x").forEach(function (b) { b.onclick = function () { b.parentNode.remove(); upd(); }; });
 }
 function buildTrain(S) {
   $("train").innerHTML = S.train.map(function (t) {
-    return '<div class="row tr"><input class="tn" value="' + esc(t.name) + '" placeholder="Название"><input class="tp" type="number" min="0" inputmode="decimal" placeholder="Стоимость, ₽" value="' + (t.price || "") + '"><input class="tm" type="number" min="1" inputmode="decimal" placeholder="Окупать, мес." value="' + (t.months || "") + '"><span class="am"></span><button class="x" type="button" title="Убрать">×</button></div>';
+    return '<div class="row tr"><input class="tn" value="' + esc(t.name) + '" placeholder="Название"><input class="tp" type="text" inputmode="decimal" placeholder="Стоимость, ₽" value="' + (t.price || "") + '"><input class="tm" type="text" inputmode="decimal" placeholder="Окупать, мес." value="' + (t.months || "") + '"><span class="am"></span><button class="x" type="button" title="Убрать">×</button></div>';
   }).join("");
   $("train").querySelectorAll(".x").forEach(function (b) { b.onclick = function () { b.parentNode.remove(); upd(); }; });
 }
 function buildFixed(S) {
   $("fixed").innerHTML = S.fixed.map(function (f) {
-    return '<div class="row f"><input class="fn" value="' + esc(f.name) + '" placeholder="Название"><input class="fm" type="number" min="0" inputmode="decimal" placeholder="₽ в месяц" value="' + (f.monthly || "") + '"><button class="x" type="button" title="Убрать">×</button></div>';
+    return '<div class="row f"><input class="fn" value="' + esc(f.name) + '" placeholder="Название"><input class="fm" type="text" inputmode="decimal" placeholder="₽ в месяц" value="' + (f.monthly || "") + '"><button class="x" type="button" title="Убрать">×</button></div>';
   }).join("");
   $("fixed").querySelectorAll(".x").forEach(function (b) { b.onclick = function () { b.parentNode.remove(); upd(); }; });
 }
@@ -121,13 +121,13 @@ function readAll() {
     var s = byId[el.dataset.id]; if (!s) return;
     s.on = el.querySelector(".son").checked; s.name = el.querySelector(".sname").value || s.name;
     s.price = num(el.querySelector(".sprice").value); s.clients = num(el.querySelector(".scli").value);
-    s.labor = num(el.querySelector(".slab").value); s.mode = el.querySelector(".smode").value;
+    s.labor = num(el.querySelector(".slab").value); if (el.querySelector(".smode").value === "pct") s.labor = Math.min(s.labor, 100); s.mode = el.querySelector(".smode").value;
     s.mats = []; el.querySelectorAll(".mats .row").forEach(function (r) { s.mats.push({ name: r.querySelector(".mn").value || "материал", price: num(r.querySelector(".mp").value), vol: num(r.querySelector(".mv").value), use: num(r.querySelector(".mu").value) }); });
   });
   S.equip = []; document.querySelectorAll("#equip .row").forEach(function (r) { S.equip.push({ name: r.querySelector(".en").value || "оборудование", price: num(r.querySelector(".ep").value), years: num(r.querySelector(".ey").value), on: r.querySelector(".eon").checked }); });
   S.train = []; document.querySelectorAll("#train .row").forEach(function (r) { S.train.push({ name: r.querySelector(".tn").value || "обучение", price: num(r.querySelector(".tp").value), months: num(r.querySelector(".tm").value) }); });
   S.fixed = []; document.querySelectorAll("#fixed .row").forEach(function (r) { S.fixed.push({ name: r.querySelector(".fn").value || "расход", monthly: num(r.querySelector(".fm").value) }); });
-  S.tax = num($("tax").value); S.profit = num($("profit").value);
+  S.tax = Math.min(num($("tax").value), 60); S.profit = Math.min(num($("profit").value), 90);
   return S;
 }
 
@@ -156,6 +156,7 @@ function upd() {
   var n = "";
   if (!R.rows.length) n = "Отметь услугу и впиши, сколько у неё клиентов в месяц.";
   else if (!R.allPriced) n = "Впиши цену у каждой включённой услуги, чтобы увидеть прибыль и рентабельность.";
+  else if (R.rows.some(function (r) { return r.price > 0 && r.margin !== null && r.margin < 0; })) n = '<span class="bad">Есть услуга, которая приносит убыток при такой цене. Смотри таблицу ниже.</span>';
   else n = R.profit >= 0 ? '<span class="ok">Кабинет в плюсе.</span> Мин. цена считается с учётом желаемой прибыли ' + S.profit + '%.' : '<span class="bad">При таких ценах кабинет в минусе.</span>';
   $("note").innerHTML = n;
 }
@@ -214,15 +215,20 @@ function snapshot() {
     res: { profit: R.profit, margin: R.margin, revenue: R.revenue, F: R.F, clients: R.totalClients }
   };
 }
+var lastSent = "";
 function show() {
   upd();
   $("result").hidden = false; $("pre").hidden = true;
   var st = $("sent"); st.textContent = "";
   if ($("consent").checked && CONFIG.collectUrl) {
-    try {
-      fetch(CONFIG.collectUrl, { method: "POST", mode: "no-cors", headers: { "Content-Type": "text/plain" }, body: JSON.stringify(snapshot()), keepalive: true });
-      st.textContent = "Цифры анонимно добавлены в статистику. Спасибо!";
-    } catch (e) { st.textContent = ""; }
+    var body = JSON.stringify(snapshot());
+    if (body === lastSent) { st.textContent = "Эти цифры уже добавлены в статистику."; }
+    else {
+      st.textContent = "Добавляю в статистику...";
+      fetch(CONFIG.collectUrl, { method: "POST", headers: { "Content-Type": "text/plain" }, body: body })
+        .then(function (r) { if (r.status === 204) { lastSent = body; st.textContent = "Цифры анонимно добавлены в статистику. Спасибо!"; } else st.textContent = "В статистику добавить не получилось, итог выше это не меняет."; })
+        .catch(function () { st.textContent = "В статистику добавить не получилось, итог выше это не меняет."; });
+    }
   } else if (!$("consent").checked) { st.textContent = "Цифры остались только у тебя."; }
   $("result").scrollIntoView({ behavior: "smooth", block: "nearest" });
 }
@@ -251,11 +257,20 @@ function stateFromHash(P) {
   var box = $("chips");
   box.innerHTML = Object.keys(PROFS).map(function (k) { return '<label class="chip"><input type="checkbox" value="' + k + '"><span>' + PROFS[k].name + '</span></label>'; }).join("");
   box.querySelectorAll("input").forEach(function (c) {
-    c.onchange = function () { readAll(); if (c.checked) addProfession(S_, c.value); else removeProfession(S_, c.value); buildAll(S_); upd(); };
+    c.onchange = function () {
+      readAll();
+      if (c.checked) addProfession(S_, c.value);
+      else {
+        var has = S_.services.some(function (s) { return s.prof === c.value && (s.price > 0 || s.clients > 0 || s.mats.some(function (m) { return m.price > 0; })); });
+        if (has && !confirm("У профиля «" + PROFS[c.value].name + "» уже введены цифры. Убрать его вместе с ними?")) { c.checked = true; return; }
+        removeProfession(S_, c.value);
+      }
+      buildAll(S_); upd();
+    };
   });
   var P = fromHash();
   var pm = /[#&]prof=([a-z,]+)/.exec(location.hash); /* ссылка вида #prof=epil открывает калькулятор сразу с нужным профилем */
-  if (P) { S_ = stateFromHash(P); }
+  if (P) { try { S_ = stateFromHash(P); if (!S_ || !Array.isArray(S_.services) || !Array.isArray(S_.equip) || !Array.isArray(S_.train) || !Array.isArray(S_.fixed) || S_.services.some(function (s) { return !PROFS[s.prof] || !Array.isArray(s.mats); })) throw 0; } catch (e) { S_ = emptyState(); P = null; } }
   else if (pm) { pm[1].split(",").forEach(function (k) { if (PROFS[k]) addProfession(S_, k); }); }
   if (!S_.profs.length) addProfession(S_, "manicure");
   S_.services.forEach(function (s) { var n = parseInt(String(s.id).slice(1), 10); if (n > uid) uid = n; });

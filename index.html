@@ -36,14 +36,14 @@
   <button type="button" class="next">Готово, дальше</button></details>
   <details class="card sec" open data-sec="4">
     <summary><h2>4. Обучение</h2><span class="done"></span></summary>
-    <p class="hint">Сколько потратила на учёбу и за сколько месяцев хочешь её окупить: обучение попадёт в стоимость услуг.</p>
+    <p class="hint">Сколько потрачено на учёбу и за сколько месяцев её нужно окупить: обучение попадёт в стоимость услуг.</p>
     <div class="row tr head"><div>Что</div><div>Стоимость, ₽</div><div>Окупать, мес.</div><div>В месяц</div><div></div></div>
     <div id="train"></div>
     <button class="add" type="button" id="addTr">+ добавить обучение</button>
   <button type="button" class="next">Готово, дальше</button></details>
   <details class="card sec" open data-sec="5">
     <summary><h2>5. Аренда и другие постоянные расходы</h2><span class="done"></span></summary>
-    <p class="hint">Всё, что платишь каждый месяц независимо от числа клиентов.</p>
+    <p class="hint">Всё, что платишь каждый месяц независимо от числа клиентов. Эти расходы делятся поровну на всех клиентов, без учёта длительности услуг.</p>
     <div class="row f head"><div>Что</div><div>₽ в месяц</div><div></div></div>
     <div id="fixed"></div>
     <button class="add" type="button" id="addFx">+ добавить расход</button>
@@ -51,9 +51,9 @@
   <details class="card sec" open data-sec="6">
     <summary><h2>6. Налоги и цель</h2><span class="done"></span></summary>
     <label for="tax">Налоги и комиссии, % от цены (самозанятый 4-6%, УСН 6%, эквайринг около 2%)</label>
-    <input id="tax" type="number" min="0" max="60" step="0.1" value="" inputmode="decimal">
+    <input id="tax" type="text" value="" inputmode="decimal">
     <label for="profit">Желаемая прибыль, % от цены</label>
-    <input id="profit" type="number" min="0" max="90" value="30" inputmode="decimal">
+    <input id="profit" type="text" value="30" inputmode="decimal">
   </details>
 </div>
 <aside class="sticky">
@@ -61,7 +61,7 @@
     <h2>Итог</h2>
     <p class="hint" id="pre">Заполни данные слева и нажми кнопку: увидишь финальный расчёт по своему кабинету.</p>
     <button class="btn" type="button" id="show">Показать итоговый расчёт</button>
-    <label class="consent"><input type="checkbox" id="consent" checked><span>Анонимно добавить мои цифры в общую статистику калькулятора (без имени и контактов). Можно снять галочку, итог покажется всё равно.</span></label>
+    <label class="consent"><input type="checkbox" id="consent" checked><span>Анонимно добавить мои цифры в общую статистику калькулятора (без имени и контактов; названия, которые вписываешь сам, тоже уходят, не пиши в них личное). Можно снять галочку, итог покажется всё равно.</span></label>
     <div id="result" hidden>
       <div class="kpi" id="kpi"></div>
       <div class="bar" id="bar"></div>
