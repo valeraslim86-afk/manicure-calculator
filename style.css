@@ -105,6 +105,11 @@ td.bad{color:var(--bad);font-weight:600}
 .cta-links a:first-of-type{background:linear-gradient(135deg,var(--ac),var(--ac-2));color:var(--ac-ink);border:0}
 footer{color:var(--mut);font-size:13px;padding:8px 18px 40px;text-align:center}
 
+textarea{width:100%;padding:11px 12px;border:1px solid var(--line);border-radius:var(--r-sm);background:var(--surface-2);color:var(--tx);font:inherit;resize:vertical;margin-top:10px}
+textarea:focus{outline:none;border-color:var(--ac);box-shadow:0 0 0 3px color-mix(in srgb,var(--ac) 22%,transparent)}
+.fbkind{display:flex;flex-wrap:wrap;gap:6px}
+.fbkind .chip span{padding:7px 12px;font-size:13px}
+#fbstatus{font-size:13px;color:var(--mut);margin-top:8px}
 /* Сворачиваемые блоки формы */
 details.sec>summary{list-style:none;cursor:pointer;display:flex;align-items:center;gap:10px}
 details.sec>summary::-webkit-details-marker{display:none}

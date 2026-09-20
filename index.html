@@ -71,6 +71,19 @@
       <div class="st" id="sent"></div>
     </div>
   </section>
+  <section class="card">
+    <h2>Обратная связь</h2>
+    <p class="hint">Понравилось, чего не хватает или что-то не работает? Напиши: читаю сам и улучшаю калькулятор.</p>
+    <div class="fbkind" id="fbkind">
+      <label class="chip"><input type="radio" name="fbk" value="thanks" checked><span>Спасибо</span></label>
+      <label class="chip"><input type="radio" name="fbk" value="improve"><span>Что улучшить</span></label>
+      <label class="chip"><input type="radio" name="fbk" value="bug"><span>Ошибка</span></label>
+    </div>
+    <textarea id="fbtext" rows="4" maxlength="1500" placeholder="Твой комментарий"></textarea>
+    <input id="fbcontact" type="text" maxlength="120" placeholder="Как ответить (по желанию): почта или ВК" style="margin-top:8px">
+    <button class="btn ghost" type="button" id="fbsend">Отправить</button>
+    <div class="st" id="fbstatus"></div>
+  </section>
 </aside>
 </main>
 <section class="container">

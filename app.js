@@ -107,7 +107,7 @@ function buildFixed(S) {
   $("fixed").querySelectorAll(".x").forEach(function (b) { b.onclick = function () { b.parentNode.remove(); upd(); }; });
 }
 function buildAll(S) {
-  document.querySelectorAll(".chip input").forEach(function (c) { c.checked = S.profs.indexOf(c.value) >= 0; });
+  document.querySelectorAll("#chips .chip input").forEach(function (c) { c.checked = S.profs.indexOf(c.value) >= 0; });
   buildServices(S); buildEquip(S); buildTrain(S); buildFixed(S);
   $("tax").value = S.tax || ""; $("profit").value = S.profit;
 }
@@ -174,6 +174,24 @@ function markDone(S, R) {
     var i = parseInt(d.dataset.sec, 10) - 1, el = d.querySelector(".done");
     if (el) el.textContent = ok[i] ? "✓ заполнено" : "";
   });
+}
+
+/* ---------- Обратная связь ---------- */
+function sendFeedback() {
+  var st = $("fbstatus"), text = $("fbtext").value.trim();
+  if (text.length < 3) { st.textContent = "Напиши хотя бы пару слов."; return; }
+  if (!CONFIG.collectUrl) { st.textContent = "Отправка сейчас недоступна."; return; }
+  var kind = document.querySelector("input[name=fbk]:checked").value;
+  var btn = $("fbsend"); btn.disabled = true; st.textContent = "Отправляю...";
+  fetch(CONFIG.collectUrl + "/feedback", { method: "POST", headers: { "Content-Type": "text/plain" },
+    body: JSON.stringify({ kind: kind, text: text, contact: $("fbcontact").value.trim(), profs: S_.profs }) })
+    .then(function (r) {
+      if (r.status === 204) { st.textContent = "Спасибо! Получил."; $("fbtext").value = ""; }
+      else if (r.status === 429) st.textContent = "Сегодня уже много сообщений, попробуй завтра.";
+      else st.textContent = "Не получилось отправить. Напиши на почту внизу страницы.";
+    })
+    .catch(function () { st.textContent = "Не получилось отправить. Напиши на почту внизу страницы."; })
+    .then(function () { btn.disabled = false; });
 }
 
 /* ---------- Итог и анонимный снимок ---------- */
@@ -247,6 +265,7 @@ function stateFromHash(P) {
   $("addTr").onclick = function () { readAll(); S_.train.push({ name: "", price: 0, months: 12 }); buildTrain(S_); upd(); };
   $("addFx").onclick = function () { readAll(); S_.fixed.push({ name: "", monthly: 0 }); buildFixed(S_); upd(); };
   $("show").onclick = show;
+  $("fbsend").onclick = sendFeedback;
   document.querySelectorAll("details.sec .next").forEach(function (b) {
     b.onclick = function () {
       var d = b.closest("details.sec"); d.open = false;
