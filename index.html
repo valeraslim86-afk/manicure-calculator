@@ -4,102 +4,14 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex,nofollow">
-<title>Калькулятор рентабельности бьюти-услуг</title>
-<meta name="description" content="Выбери свой профиль, впиши расходы и цены: калькулятор покажет себестоимость каждой услуги, прибыль и рентабельность кабинета.">
-<link rel="stylesheet" href="style.css">
+<title>Калькулятор для мастеров переехал</title>
+<!-- Старый адрес страницы. Перебрасывает на новый с сохранением кода получателя (?u=) и данных (#...). -->
+<script>location.replace("https://kalkulyator-mastera.github.io/" + location.search + location.hash);</script>
+<noscript><meta http-equiv="refresh" content="0; url=https://kalkulyator-mastera.github.io/"></noscript>
+<style>body{font:16px/1.5 system-ui,sans-serif;max-width:520px;margin:12vh auto;padding:0 18px;color:#2a2124}a{color:#c2456e}</style>
 </head>
 <body>
-<header class="hero"><div class="container">
-  <span class="badge">Калькулятор для мастера</span>
-  <h1>Сколько на самом деле зарабатывает твой кабинет</h1>
-  <p class="lead">Выбери свои услуги, впиши расходы и цены: справа сразу увидишь себестоимость, прибыль и рентабельность. Расчёт идёт прямо в твоём браузере.</p>
-  <div class="steps"><div class="step"><b>1</b>Профиль</div><div class="step"><b>2</b>Услуги и материалы</div><div class="step"><b>3</b>Оборудование и обучение</div><div class="step"><b>4</b>Налоги</div></div>
-</div></header>
-<main class="container layout">
-<div>
-  <details class="card sec" open data-sec="1">
-    <summary><h2>1. Чем ты занимаешься</h2><span class="done"></span></summary>
-    <p class="hint">Можно отметить несколько. Для каждого профиля подставятся типовые услуги, материалы и оборудование, цены впишешь ты.</p>
-    <div class="chips" id="chips"></div>
-  <button type="button" class="next">Готово, дальше</button></details>
-  <details class="card sec" open data-sec="2">
-    <summary><h2>2. Услуги</h2><span class="done"></span></summary>
-    <p class="hint">Раскрой услугу, впиши цену, число клиентов в месяц, оплату мастера и материалы. Ненужное выключи галочкой.</p>
-    <div id="svcList"></div>
-  <button type="button" class="next">Готово, дальше</button></details>
-  <details class="card sec" open data-sec="3">
-    <summary><h2>3. Оборудование и мебель</h2><span class="done"></span></summary>
-    <p class="hint">Отметь галочкой, что у тебя есть, впиши цену и срок службы: амортизация в месяц посчитается сама (цена ÷ срок в месяцах).</p>
-    <div class="row eq head"><div></div><div>Что</div><div>Цена, ₽</div><div>Срок, лет</div><div>В месяц</div><div></div></div>
-    <div id="equip"></div>
-    <button class="add" type="button" id="addEq">+ добавить оборудование</button>
-  <button type="button" class="next">Готово, дальше</button></details>
-  <details class="card sec" open data-sec="4">
-    <summary><h2>4. Обучение</h2><span class="done"></span></summary>
-    <p class="hint">Сколько потрачено на учёбу и за сколько месяцев её нужно окупить: обучение попадёт в стоимость услуг.</p>
-    <div class="row tr head"><div>Что</div><div>Стоимость, ₽</div><div>Окупать, мес.</div><div>В месяц</div><div></div></div>
-    <div id="train"></div>
-    <button class="add" type="button" id="addTr">+ добавить обучение</button>
-  <button type="button" class="next">Готово, дальше</button></details>
-  <details class="card sec" open data-sec="5">
-    <summary><h2>5. Аренда и другие постоянные расходы</h2><span class="done"></span></summary>
-    <p class="hint">Всё, что платишь каждый месяц независимо от числа клиентов. Эти расходы делятся поровну на всех клиентов, без учёта длительности услуг.</p>
-    <div class="row f head"><div>Что</div><div>₽ в месяц</div><div></div></div>
-    <div id="fixed"></div>
-    <button class="add" type="button" id="addFx">+ добавить расход</button>
-  <button type="button" class="next">Готово, дальше</button></details>
-  <details class="card sec" open data-sec="6">
-    <summary><h2>6. Налоги и цель</h2><span class="done"></span></summary>
-    <label for="tax">Налоги и комиссии, % от цены (самозанятый 4-6%, УСН 6%, эквайринг около 2%)</label>
-    <input id="tax" type="text" value="" inputmode="decimal">
-    <label for="profit">Желаемая прибыль, % от цены</label>
-    <input id="profit" type="text" value="30" inputmode="decimal">
-  </details>
-</div>
-<aside class="sticky">
-  <section class="card">
-    <h2>Итог</h2>
-    <p class="hint" id="pre">Заполни данные слева и нажми кнопку: увидишь финальный расчёт по своему кабинету.</p>
-    <button class="btn" type="button" id="show">Показать итоговый расчёт</button>
-    <label class="consent"><input type="checkbox" id="consent" checked><span>Анонимно добавить мои цифры в общую статистику калькулятора (без имени и контактов; названия, которые вписываешь сам, тоже уходят, не пиши в них личное). Можно снять галочку, итог покажется всё равно.</span></label>
-    <div id="result" hidden>
-      <div class="kpi" id="kpi"></div>
-      <div class="bar" id="bar"></div>
-      <div class="leg" id="leg"></div>
-      <div class="tblwrap" id="tbl"></div>
-      <div class="note" id="note"></div>
-      <div class="st" id="sent"></div>
-    </div>
-  </section>
-  <section class="card">
-    <h2>Обратная связь</h2>
-    <p class="hint">Понравилось, чего не хватает или что-то не работает? Напиши: читаю сам и улучшаю калькулятор.</p>
-    <div class="fbkind" id="fbkind">
-      <label class="chip"><input type="radio" name="fbk" value="thanks" checked><span>Спасибо</span></label>
-      <label class="chip"><input type="radio" name="fbk" value="improve"><span>Что улучшить</span></label>
-      <label class="chip"><input type="radio" name="fbk" value="bug"><span>Ошибка</span></label>
-    </div>
-    <textarea id="fbtext" rows="4" maxlength="1500" placeholder="Твой комментарий"></textarea>
-    <input id="fbcontact" type="text" maxlength="120" placeholder="Как ответить (по желанию): почта или ВК" style="margin-top:8px">
-    <button class="btn ghost" type="button" id="fbsend">Отправить</button>
-    <div class="st" id="fbstatus"></div>
-  </section>
-</aside>
-</main>
-<section class="container">
-  <div class="cta">
-    <div>
-      <span class="badge">Автоматизация для бизнеса</span>
-      <h2>Нужен такой же инструмент для своего дела?</h2>
-      <p>Калькуляторы, расчёты, боты, отчёты и автоматизация рутины: беру задачи малого бизнеса и частных мастеров. Напиши, что хочешь упростить, отвечу по делу.</p>
-    </div>
-    <div class="cta-links">
-      <a href="https://t.me/pyankov_vv">Telegram: @pyankov_vv</a>
-    </div>
-  </div>
-</section>
-<footer>Расчёт ориентировочный и считается в твоём браузере. Анонимная статистика уходит только если стоит галочка при показе итога, без имени и контактов.</footer>
-<script src="presets.js"></script>
-<script src="app.js"></script>
+<h1>Калькулятор переехал</h1>
+<p>Сейчас откроется новая страница. Если этого не произошло, перейдите по ссылке: <a href="https://kalkulyator-mastera.github.io/">kalkulyator-mastera.github.io</a>.</p>
 </body>
 </html>
