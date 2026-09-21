@@ -8,7 +8,7 @@ function $(i) { return document.getElementById(i); }
 function num(v) { var n = parseFloat(String(v).replace(/\s/g, "").replace(",", ".")); return isFinite(n) && n > 0 ? n : 0; }
 function rub(x) { return Math.round(x).toLocaleString("ru-RU") + " ₽"; }
 function pct(x) { return (Math.round(x * 10) / 10).toLocaleString("ru-RU") + "%"; }
-function esc(s) { return String(s == null ? "" : s).replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/</g, "&lt;"); }
+function esc(s) { return String(s == null ? "" : s).replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/'/g, "&#39;").replace(/</g, "&lt;").replace(/>/g, "&gt;"); }
 
 /* ---------- Ядро расчёта (те же формулы, что в калькулятор.py, плюс общие расходы кабинета) ---------- */
 function calcAll(S) {
@@ -70,13 +70,13 @@ function removeProfession(S, prof) {
 }
 
 /* ---------- Отрисовка (пересобирается только при структурных изменениях) ---------- */
-function rowMat(m) { return '<div class="row"><input class="mn" value="' + esc(m.name) + '" placeholder="Название"><input class="mp" type="text" inputmode="decimal" value="' + (m.price || "") + '"><input class="mv" type="text" inputmode="decimal" value="' + (m.vol || "") + '"><input class="mu" type="text" inputmode="decimal" value="' + (m.use || "") + '"><button class="x" type="button" title="Убрать">×</button></div>'; }
+function rowMat(m) { return '<div class="row"><input class="mn" value="' + esc(m.name) + '" placeholder="Название"><input class="mp" type="text" inputmode="decimal" value="' + esc(m.price || "") + '"><input class="mv" type="text" inputmode="decimal" value="' + esc(m.vol || "") + '"><input class="mu" type="text" inputmode="decimal" value="' + esc(m.use || "") + '"><button class="x" type="button" title="Убрать">×</button></div>'; }
 function buildServices(S) {
   $("svcList").innerHTML = S.services.map(function (s) {
-    return '<details class="svc" data-id="' + s.id + '" data-prof="' + s.prof + '"' + (s.on ? " open" : "") + '>' +
+    return '<details class="svc" data-id="' + esc(s.id) + '" data-prof="' + esc(s.prof) + '"' + (s.on ? " open" : "") + '>' +
       '<summary><label class="chk" onclick="event.stopPropagation()"><input type="checkbox" class="son"' + (s.on ? " checked" : "") + '></label><input class="sname" value="' + esc(s.name) + '" onclick="event.stopPropagation()"><span class="tag">' + esc(PROFS[s.prof].name) + '</span></summary>' +
-      '<div class="svc-body"><div class="two"><div><label>Цена для клиента, ₽</label><input class="sprice" type="text" inputmode="decimal" value="' + (s.price || "") + '"></div><div><label>Клиентов в месяц</label><input class="scli" type="text" inputmode="decimal" value="' + (s.clients || "") + '"></div></div>' +
-      '<div class="two"><div><label>Оплата мастера</label><input class="slab" type="text" inputmode="decimal" value="' + (s.labor || "") + '"></div><div><label>Как считается</label><select class="smode"><option value="rub"' + (s.mode === "rub" ? " selected" : "") + '>₽ за услугу</option><option value="pct"' + (s.mode === "pct" ? " selected" : "") + '>% от цены</option></select></div></div>' +
+      '<div class="svc-body"><div class="two"><div><label>Цена для клиента, ₽</label><input class="sprice" type="text" inputmode="decimal" value="' + esc(s.price || "") + '"></div><div><label>Клиентов в месяц</label><input class="scli" type="text" inputmode="decimal" value="' + esc(s.clients || "") + '"></div></div>' +
+      '<div class="two"><div><label>Оплата мастера</label><input class="slab" type="text" inputmode="decimal" value="' + esc(s.labor || "") + '"></div><div><label>Как считается</label><select class="smode"><option value="rub"' + (s.mode === "rub" ? " selected" : "") + '>₽ за услугу</option><option value="pct"' + (s.mode === "pct" ? " selected" : "") + '>% от цены</option></select></div></div>' +
       '<p class="hint" style="margin-top:12px">Материалы на одного клиента. «Цена» за упаковку, «В упаковке» сколько штук, мл или г, «На клиента» сколько уходит на одну услугу.</p>' +
       '<div class="row head"><div>Что</div><div>Цена, ₽</div><div>В упаковке</div><div>На клиента</div><div></div></div><div class="mats">' + s.mats.map(rowMat).join("") + '</div>' +
       '<button class="add addmat" type="button">+ добавить материал</button><button class="link delsvc" type="button">Удалить услугу</button></div></details>';
@@ -90,19 +90,19 @@ function buildServices(S) {
 function bindMats(el) { el.querySelectorAll(".mats .x").forEach(function (b) { b.onclick = function () { b.parentNode.remove(); upd(); }; }); }
 function buildEquip(S) {
   $("equip").innerHTML = S.equip.map(function (e) {
-    return '<div class="row eq"><label class="chk"><input type="checkbox" class="eon"' + (e.on ? " checked" : "") + '></label><input class="en" value="' + esc(e.name) + '" placeholder="Название"><input class="ep" type="text" inputmode="decimal" placeholder="Цена, ₽" value="' + (e.price || "") + '"><input class="ey" type="text" inputmode="decimal" placeholder="Срок, лет" value="' + (e.years || "") + '"><span class="am"></span><button class="x" type="button" title="Убрать">×</button></div>';
+    return '<div class="row eq"><label class="chk"><input type="checkbox" class="eon"' + (e.on ? " checked" : "") + '></label><input class="en" value="' + esc(e.name) + '" placeholder="Название"><input class="ep" type="text" inputmode="decimal" placeholder="Цена, ₽" value="' + esc(e.price || "") + '"><input class="ey" type="text" inputmode="decimal" placeholder="Срок, лет" value="' + esc(e.years || "") + '"><span class="am"></span><button class="x" type="button" title="Убрать">×</button></div>';
   }).join("");
   $("equip").querySelectorAll(".x").forEach(function (b) { b.onclick = function () { b.parentNode.remove(); upd(); }; });
 }
 function buildTrain(S) {
   $("train").innerHTML = S.train.map(function (t) {
-    return '<div class="row tr"><input class="tn" value="' + esc(t.name) + '" placeholder="Название"><input class="tp" type="text" inputmode="decimal" placeholder="Стоимость, ₽" value="' + (t.price || "") + '"><input class="tm" type="text" inputmode="decimal" placeholder="Окупать, мес." value="' + (t.months || "") + '"><span class="am"></span><button class="x" type="button" title="Убрать">×</button></div>';
+    return '<div class="row tr"><input class="tn" value="' + esc(t.name) + '" placeholder="Название"><input class="tp" type="text" inputmode="decimal" placeholder="Стоимость, ₽" value="' + esc(t.price || "") + '"><input class="tm" type="text" inputmode="decimal" placeholder="Окупать, мес." value="' + esc(t.months || "") + '"><span class="am"></span><button class="x" type="button" title="Убрать">×</button></div>';
   }).join("");
   $("train").querySelectorAll(".x").forEach(function (b) { b.onclick = function () { b.parentNode.remove(); upd(); }; });
 }
 function buildFixed(S) {
   $("fixed").innerHTML = S.fixed.map(function (f) {
-    return '<div class="row f"><input class="fn" value="' + esc(f.name) + '" placeholder="Название"><input class="fm" type="text" inputmode="decimal" placeholder="₽ в месяц" value="' + (f.monthly || "") + '"><button class="x" type="button" title="Убрать">×</button></div>';
+    return '<div class="row f"><input class="fn" value="' + esc(f.name) + '" placeholder="Название"><input class="fm" type="text" inputmode="decimal" placeholder="₽ в месяц" value="' + esc(f.monthly || "") + '"><button class="x" type="button" title="Убрать">×</button></div>';
   }).join("");
   $("fixed").querySelectorAll(".x").forEach(function (b) { b.onclick = function () { b.parentNode.remove(); upd(); }; });
 }
