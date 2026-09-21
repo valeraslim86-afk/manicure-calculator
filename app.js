@@ -4,6 +4,9 @@
 var OWNER_VK = "8499740";
 var CONFIG = { collectUrl: "https://beauty-calc-collector.valeraslim86.workers.dev" }; /* приём анонимной статистики (Cloudflare Worker + D1); пусто = сбор выключен */
 
+/* Уникальный код ссылки получателя: ?u=k7q2x9 (случайный, без имени человека; кто за кодом - знает только владелец) */
+var REF = (function () { var m = /[?&]u=([A-Za-z0-9]{3,12})(?:&|$)/.exec(location.search); return m ? m[1] : ""; })();
+
 function $(i) { return document.getElementById(i); }
 function num(v) { var n = parseFloat(String(v).replace(/\s/g, "").replace(",", ".")); return isFinite(n) && n > 0 ? n : 0; }
 function rub(x) { return Math.round(x).toLocaleString("ru-RU") + " ₽"; }
@@ -185,7 +188,7 @@ function sendFeedback() {
   var kind = document.querySelector("input[name=fbk]:checked").value;
   var btn = $("fbsend"); btn.disabled = true; st.textContent = "Отправляю...";
   fetch(CONFIG.collectUrl + "/feedback", { method: "POST", headers: { "Content-Type": "text/plain" },
-    body: JSON.stringify({ kind: kind, text: text, contact: $("fbcontact").value.trim(), profs: S_.profs }) })
+    body: JSON.stringify({ ref: REF, kind: kind, text: text, contact: $("fbcontact").value.trim(), profs: S_.profs }) })
     .then(function (r) {
       if (r.status === 204) { st.textContent = "Спасибо! Получил."; $("fbtext").value = ""; }
       else if (r.status === 429) st.textContent = "Сегодня уже много сообщений, попробуй завтра.";
@@ -204,7 +207,7 @@ function snapshot() {
   Object.keys(PROFS).forEach(function (k) { allMats = allMats.concat(PROFS[k].mats); allEq = allEq.concat(PROFS[k].equip); });
   var allSvc = []; Object.keys(PROFS).forEach(function (k) { allSvc = allSvc.concat(PROFS[k].services); });
   return {
-    v: 1, t: new Date().toISOString(), profs: S.profs, tax: S.tax, profit: S.profit,
+    v: 1, ref: REF, t: new Date().toISOString(), profs: S.profs, tax: S.tax, profit: S.profit,
     services: S.services.filter(function (s) { return s.on && s.clients > 0; }).map(function (s) {
       return { prof: s.prof, name: known(allSvc, s.name) ? s.name : "", custom: !known(allSvc, s.name), price: s.price, clients: s.clients, labor: s.labor, mode: s.mode,
         mats: s.mats.filter(function (m) { return m.price > 0; }).map(function (m) { return { name: clip(m.name), std: known(allMats, m.name), price: m.price, vol: m.vol, use: m.use }; }) };
